@@ -8,7 +8,6 @@ import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -30,13 +29,13 @@ public class OAuth2ResourceServerSecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize //
                         .anyRequest().authenticated()) //
                 .oauth2ResourceServer(oauth2 -> oauth2 //
-                        .jwt(Customizer.withDefaults()));
+                        .jwt(jwt -> jwt //
+                                .jwtAuthenticationConverter(this.jwtAuthenticationConverter())));
         return http.build();
     }
 
     // https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/jwt.html#oauth2resourceserver-jwt-authorization-extraction
-    @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+    private JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setPrincipalClaimName("preferred_username");
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeycloakAuthoritiesConverter());
@@ -45,7 +44,7 @@ public class OAuth2ResourceServerSecurityConfig {
 
     // Spring OAuth2 uses default Scopes Not Roles for Authorization
     // org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter
-    public class KeycloakAuthoritiesConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
+    private class KeycloakAuthoritiesConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
 
         @Override
         public Collection<GrantedAuthority> convert(Jwt jwt) {
